@@ -3,19 +3,25 @@ extends KinematicBody2D
 onready var SM = $StateMachine
 
 var velocity = Vector2.ZERO
-var jump_power = Vector2.ZERO
+var jump_power = Vector2(0, -600)
 var direction = 1
+var momentum = 0
 
-export var gravity = Vector2(0,30)
+export var gravity = Vector2(0, 20)
 
-export var move_speed = 20
-export var max_move = 300
+export var move_speed = 30
+export var max_move = 500
 
-export var jump_speed = 200
-export var max_jump = 1200
+export var min_boost_down = 1000
+export var boost_power = Vector2(0, -1000)
 
-export var leap_speed = 200
-export var max_leap = 1200
+export var maxBoost = 4000
+
+var boostLeft = false
+var boostRight = false
+var boostUp = false
+
+var boostDirection = Vector2.ZERO
 
 var moving = false
 var is_jumping = false
@@ -24,15 +30,22 @@ var should_direction_flip = true # wether or not player controls (left/right) ca
 
 
 func _physics_process(_delta):
-	velocity.x = clamp(velocity.x,-max_move,max_move)
+	if is_on_floor():
+		boostLeft = false
+		boostRight = false
+		boostUp = false
+		velocity.x = clamp(velocity.x,-max_move,max_move)
+	else:
+		velocity.x = clamp(velocity.x, -maxBoost, maxBoost)
 		
 	if should_direction_flip:
 		if direction < 0 and not $AnimatedSprite.flip_h: $AnimatedSprite.flip_h = true
 		if direction > 0 and $AnimatedSprite.flip_h: $AnimatedSprite.flip_h = false
 	
 	if is_on_floor():
-		double_jumped = false
 		set_wall_raycasts(true)
+	
+	Global.playerPos = position
 
 func is_moving():
 	if Input.is_action_pressed("left") or Input.is_action_pressed("right"):
@@ -40,13 +53,19 @@ func is_moving():
 	return false
 
 func move_vector():
-	return Vector2(Input.get_action_strength("right") - Input.get_action_strength("left"),1.0)
+	return Vector2(Input.get_action_strength("right") - Input.get_action_strength("left"), 0.0)
 
 func _unhandled_input(event):
 	if event.is_action_pressed("left"):
 		direction = -1
-	if event.is_action_pressed("right"):
+		boostDirection = Vector2.LEFT
+	elif event.is_action_pressed("right"):
 		direction = 1
+		boostDirection = Vector2.RIGHT
+	elif event.is_action_pressed("up"):
+		boostDirection = Vector2.UP
+	else:
+		boostDirection = Vector2.ZERO
 
 func set_animation(anim):
 	if $AnimatedSprite.animation == anim: return

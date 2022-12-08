@@ -15,5 +15,5 @@ func physics_process(_delta):
 		SM.set_state("Falling")
 	if player.is_moving():
 		SM.set_state("Moving")
-	if Input.is_action_pressed("jump"):
+	if Input.is_action_pressed("up"):
 		SM.set_state("Jumping")

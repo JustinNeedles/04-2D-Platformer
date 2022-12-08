@@ -8,9 +8,8 @@ func _ready():
 
 func start():
 	player.set_animation("Falling")
-	player.jump_power = Vector2.ZERO
 
-func physics_process(_delta):
+func physics_process(delta):
 	if player.is_on_floor() and player.velocity.y > 0:
 		player.velocity.y = 0
 		if player.is_moving():
@@ -18,11 +17,13 @@ func physics_process(_delta):
 		else:
 			SM.set_state("Idle")
 		return
+	if Input.is_action_just_pressed("down"):
+		SM.set_state("BoostDown")
+	elif (Input.is_action_just_pressed("up") and not player.boostUp) or (Input.is_action_just_pressed("right") and not player.boostRight) or (Input.is_action_just_pressed("left") and not player.boostLeft):
+		SM.set_state("Boost")
 	if player.is_on_ceiling():
 		player.velocity.y = 0
-	if Input.is_action_pressed("jump") and not player.double_jumped and SM.previous_state.name != "WallJump":
-		player.double_jumped = true
-		SM.set_state("Jumping")
-		
-	player.velocity += player.move_speed * player.move_vector() + player.gravity
+	if player.is_on_wall():
+		player.velocity.x = 0
+	player.velocity += player.gravity
 	player.move_and_slide(player.velocity, Vector2.UP)
